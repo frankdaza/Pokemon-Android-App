@@ -28,7 +28,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private var location: Location = Location("Start")
     private var oldLocation: Location = Location("Start")
     private val accessCode = 123
-    var listPokemon = ArrayList<Pokemon>()
+    private var listPokemon = ArrayList<Pokemon>()
+    private var playerPower: Double = 0.0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,20 +146,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         mMap.addMarker(MarkerOptions()
                                 .position(sydney)
                                 .title("Me")
-                                .snippet("Here is my location")
+                                .snippet("Here is my location - My Power is: $playerPower")
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.mario)))
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 14f))
 
                         // Show Pokemons
                         for (pokemon in listPokemon) {
                             if (pokemon.isCatch == false) {
-                                val sydney = LatLng(pokemon.latitude, pokemon.longitude)
+                                val sydney = LatLng(pokemon.location.latitude, pokemon.location.longitude)
                                 mMap.addMarker(MarkerOptions()
                                         .position(sydney)
                                         .title(pokemon.name)
-                                        .snippet(pokemon.description)
+                                        .snippet(pokemon.description + " - Power: ${pokemon.power}")
                                         .icon(BitmapDescriptorFactory.fromResource(pokemon.image)))
                                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 20f))
+
+                                if (location.distanceTo(pokemon.location) <= 3) {
+                                    pokemon.isCatch = true
+                                    playerPower += pokemon.power
+                                    Toast.makeText(applicationContext, "You catch a new ${pokemon.name}, your new power is $playerPower", Toast.LENGTH_LONG).show()
+                                }
                             }
                         }
                     }
