@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.widget.Toast
+import com.frankdaza.pokemon.model.Pokemon
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -24,8 +25,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var mMap: GoogleMap
 
-    var location: Location = Location("Start")
+    private var location: Location = Location("Start")
+    private var oldLocation: Location = Location("Start")
     private val accessCode = 123
+    var listPokemon = ArrayList<Pokemon>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +37,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
                 .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+        loadPokemons()
     }
 
     /**
@@ -82,12 +86,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
+    fun loadPokemons() {
+        this.listPokemon.add(Pokemon("Bulbasaur", R.drawable.bulbasaur, "It is from forest", 40.0, 3.3784764, -76.5224232))
+        this.listPokemon.add(Pokemon("Charmander", R.drawable.charmander, "It is a fire beast", 65.0, 3.3781865, -76.5220044))
+        this.listPokemon.add(Pokemon("Squirtle", R.drawable.squirtle, "It is a water pokemon", 59.7, 3.3783303, -76.5222941))
+    }
+
     inner class MyLocationListener : LocationListener {
 
         constructor() {
             location = Location("Start")
-            location.latitude = 3.4372200
-            location.longitude = -76.5225
+            location.latitude = 3.3784764
+            location.longitude = -76.5224232
         }
 
         override fun onLocationChanged(p0: Location?) {
@@ -111,14 +121,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     inner class MyThread : Thread {
 
         constructor() : super() {
-
+            oldLocation = Location("Start")
+            oldLocation.latitude = 3.37
+            oldLocation.longitude = -76.52
         }
 
         override fun run() {
             try {
                 while (true) {
+                    if (oldLocation.distanceTo(location) == 0f) {
+                        continue
+                    }
+
+                    oldLocation = location
+
                     runOnUiThread {
                         mMap.clear()
+
+                        // Show me
                         // Add a marker in Sydney and move the camera
                         val sydney = LatLng(location.latitude, location.longitude)
                         mMap.addMarker(MarkerOptions()
@@ -127,6 +147,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 .snippet("Here is my location")
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.mario)))
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 14f))
+
+                        // Show Pokemons
+                        for (pokemon in listPokemon) {
+                            if (pokemon.isCatch == false) {
+                                val sydney = LatLng(pokemon.latitude, pokemon.longitude)
+                                mMap.addMarker(MarkerOptions()
+                                        .position(sydney)
+                                        .title(pokemon.name)
+                                        .snippet(pokemon.description)
+                                        .icon(BitmapDescriptorFactory.fromResource(pokemon.image)))
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 20f))
+                            }
+                        }
                     }
                     Thread.sleep(1000)
                 }
